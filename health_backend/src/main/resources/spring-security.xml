@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:securty="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                            http://www.springframework.org/schema/beans/spring-beans.xsd
+                            http://www.springframework.org/schema/security
+                            http://www.springframework.org/schema/security/spring-security.xsd
+                          http://www.springframework.org/schema/mvc
+                            http://www.springframework.org/schema/mvc/spring-mvc.xsd
+                            http://www.springframework.org/schema/context
+                            http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--http用于定于访问权限控制,auto-config表示是否自动配置权限控制,
+    如果是true,框架会自动提供自带的登录页面和登出页面-->
+    <!--use-erpressions用于intercepet的access是否使用表达式-->
+   <!-- <security:http auto-config="true" use-expressions="true">
+        &lt;!&ndash;intercept-url指定拦截路径 在请求对应的url路径时需要什么权限,
+        默认配置时,它应该是以逗号分隔的角色列表,
+        请求的用户只需要拥有一个角色就可以成功访问对应页面&ndash;&gt;
+        <security:intercept-url pattern="/**" access="hasRole('ROLE_ADMIN')"></security:intercept-url>
+    </security:http>
+-->
+
+
+    <security:http security="none" pattern="/login.html"/>
+    <security:http security="none" pattern="/css/**"/>
+    <security:http security="none" pattern="/img/**"/>
+    <security:http security="none" pattern="/js/**"/>
+    <security:http security="none" pattern="/plugins/**"/>
+    <!--<securty:http security="none" pattern="/pages/*" />-->
+    <security:http auto-config="true" use-expressions="true" >
+
+         <security:headers><!--设置认证通过后可以访问以iframe插入的页面,默认是不允许的-->
+             <security:frame-options policy="SAMEORIGIN"></security:frame-options>
+         </security:headers>
+
+        <!--只要认证通过了,及只要登录通过-->
+        <security:intercept-url pattern="/pages/**" access="isAuthenticated()"/>
+
+         <!--自定义登录页面-->
+        <security:form-login login-page="/login.html"
+                                 username-parameter="username"
+                                password-parameter="password"
+                             login-processing-url="/login.do"
+                             default-target-url="/pages/main.html"
+        authentication-failure-url="/login.html"></security:form-login>
+        <security:csrf disabled="true"/>
+        <security:logout logout-url="/logout.do" logout-success-url="/login.html" invalidate-session="true"/>
+    </security:http>
+
+
+    <security:authentication-manager><!--认证管理器,用于管理认证操作-->
+        <security:authentication-provider user-service-ref="springUserService"><!--认证提供者,执行具体的认证逻辑-->
+            <!--<security:user-service>&lt;!&ndash;&ndash;&gt;
+                <security:user name="admin" password="{noop}1234" authorities="ROLE_ADMIN"/>
+            </security:user-service>-->
+            <security:password-encoder ref="passwordEncoder"/>
+            <!--将其加密方法引入认证管理器中-->
+        </security:authentication-provider>
+    </security:authentication-manager>
+
+
+
+    <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"></bean>
+
+<!--开启注解方式权限控制-->
+<security:global-method-security pre-post-annotations="enabled"/>
+   <!-- <security:authentication-manager>
+        <security:authentication-provider>
+            <security:user-service>
+                <security:user name="xiaoming" password="{noop}xiaoming" authorities="ROLE_ADMIN"/>
+
+            </security:user-service>
+        </security:authentication-provider>
+    </security:authentication-manager>-->
+</beans>
